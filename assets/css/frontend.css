@@ -11,6 +11,56 @@
     padding: 5px;
 }
 
+/* Icon Grid */
+.cpd-icon-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(50px, 1fr));
+    gap: 8px;
+    margin-top: 10px;
+    max-height: 200px;
+    overflow-y: auto;
+    padding: 5px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    background: #f9f9f9;
+}
+
+.cpd-icon-item {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 8px;
+    cursor: pointer;
+    border: 2px solid transparent;
+    border-radius: 4px;
+    background: white;
+    transition: all 0.2s ease;
+    min-height: 50px;
+}
+
+.cpd-icon-item:hover {
+    border-color: #0073aa;
+    background: #f0f8ff;
+    transform: scale(1.1);
+}
+
+.cpd-icon-item .iconify {
+    color: #333;
+}
+
+.cpd-icon-item:hover .iconify {
+    color: #0073aa;
+}
+
+#cpd-icon-collection {
+    width: 100%;
+    padding: 8px;
+    margin-bottom: 5px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 14px;
+}
+
 /* Designer Button */
 .cpd-designer-btn {
     background-color: #0073aa;

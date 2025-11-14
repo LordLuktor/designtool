@@ -3,7 +3,7 @@
  * Plugin Name: Custom Product Designer for WooCommerce
  * Plugin URI: https://github.com/LordLuktor/designtool
  * Description: A powerful product customization tool that allows customers to design custom products like t-shirts, cups, caps, and more with text, images, shapes, and effects.
- * Version: 1.0.4
+ * Version: 1.0.5
  * Author: Custom Design Tool
  * Author URI: https://github.com/LordLuktor
  * Text Domain: custom-product-designer
@@ -25,7 +25,7 @@ if (!defined('ABSPATH')) {
 }
 
 // Define plugin constants
-define('CPD_VERSION', '1.0.4');
+define('CPD_VERSION', '1.0.5');
 define('CPD_PLUGIN_DIR', plugin_dir_path(__FILE__));
 define('CPD_PLUGIN_URL', plugin_dir_url(__FILE__));
 define('CPD_PLUGIN_BASENAME', plugin_basename(__FILE__));
@@ -185,8 +185,38 @@ class Custom_Product_Designer {
             // Fabric.js for canvas manipulation
             wp_enqueue_script('fabricjs', 'https://cdnjs.cloudflare.com/ajax/libs/fabric.js/5.3.0/fabric.min.js', array(), '5.3.0', true);
 
-            // Google Fonts - Expanded font library
-            wp_enqueue_style('google-fonts', 'https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&family=Open+Sans:wght@400;700&family=Lato:wght@400;700&family=Montserrat:wght@400;700&family=Oswald:wght@400;700&family=Raleway:wght@400;700&family=Poppins:wght@400;700&family=Playfair+Display:wght@400;700&family=Merriweather:wght@400;700&family=Ubuntu:wght@400;700&family=Nunito:wght@400;700&family=Pacifico&family=Dancing+Script:wght@400;700&family=Lobster&family=Bebas+Neue&family=Anton&family=Abril+Fatface&family=Righteous&family=Caveat:wght@400;700&family=Permanent+Marker&family=Indie+Flower&family=Shadows+Into+Light&family=Satisfy&family=Great+Vibes&family=Courier+Prime:wght@400;700&display=swap', array(), null);
+            // Google Fonts - Massive font library (100+ fonts)
+            $google_fonts = array(
+                'Roboto:wght@400;700', 'Open+Sans:wght@400;700', 'Lato:wght@400;700', 'Montserrat:wght@400;700',
+                'Oswald:wght@400;700', 'Raleway:wght@400;700', 'Poppins:wght@400;700', 'Playfair+Display:wght@400;700',
+                'Merriweather:wght@400;700', 'Ubuntu:wght@400;700', 'Nunito:wght@400;700', 'PT+Sans:wght@400;700',
+                'Source+Sans+Pro:wght@400;700', 'Noto+Sans:wght@400;700', 'Quicksand:wght@400;700', 'Karla:wght@400;700',
+                'Inter:wght@400;700', 'Rubik:wght@400;700', 'Work+Sans:wght@400;700', 'Fira+Sans:wght@400;700',
+                'Barlow:wght@400;700', 'DM+Sans:wght@400;700', 'Manrope:wght@400;700', 'Outfit:wght@400;700',
+                'Pacifico', 'Dancing+Script:wght@400;700', 'Lobster', 'Bebas+Neue', 'Anton', 'Abril+Fatface',
+                'Righteous', 'Caveat:wght@400;700', 'Permanent+Marker', 'Indie+Flower', 'Shadows+Into+Light',
+                'Satisfy', 'Great+Vibes', 'Courier+Prime:wght@400;700', 'Comfortaa:wght@400;700', 'Josefin+Sans:wght@400;700',
+                'Bitter:wght@400;700', 'Arvo:wght@400;700', 'Cabin:wght@400;700', 'Oxygen:wght@400;700', 'Crimson+Text:wght@400;700',
+                'EB+Garamond:wght@400;700', 'Lora:wght@400;700', 'PT+Serif:wght@400;700', 'Noto+Serif:wght@400;700',
+                'Source+Serif+Pro:wght@400;700', 'Spectral:wght@400;700', 'Domine:wght@400;700', 'Vollkorn:wght@400;700',
+                'Alegreya:wght@400;700', 'Libre+Baskerville:wght@400;700', 'Cormorant:wght@400;700', 'Cinzel:wght@400;700',
+                'Amatic+SC:wght@400;700', 'Architects+Daughter', 'Gloria+Hallelujah', 'Kalam:wght@400;700',
+                'Patrick+Hand', 'Rock+Salt', 'Reenie+Beanie', 'Sacramento', 'Tangerine:wght@400;700',
+                'Courgette', 'Cookie', 'Allura', 'Yellowtail', 'Kaushan+Script', 'Alex+Brush', 'Parisienne',
+                'Pinyon+Script', 'Rouge+Script', 'Mr+Dafoe', 'Mrs+Saint+Delafield', 'Allison', 'Engagement',
+                'Bangers', 'Alfa+Slab+One', 'Bungee', 'Fredoka:wght@400;700', 'Lilita+One', 'Patua+One',
+                'Bowlby+One+SC', 'Black+Ops+One', 'Russo+One', 'Londrina+Solid:wght@400;700', 'Titan+One',
+                'Passion+One:wght@400;700', 'Archivo+Black', 'Teko:wght@400;700', 'Concert+One', 'Sigmar+One',
+                'Secular+One', 'Exo+2:wght@400;700', 'Orbitron:wght@400;700', 'Audiowide', 'Saira+Condensed:wght@400;700',
+                'Fugaz+One', 'Righteous', 'Contrail+One', 'Kanit:wght@400;700', 'Pathway+Gothic+One', 'Gruppo',
+                'Rajdhani:wght@400;700', 'Economica:wght@400;700', 'Electrolize', 'Iceland', 'Share+Tech+Mono',
+                'Space+Mono:wght@400;700', 'IBM+Plex+Mono:wght@400;700', 'Inconsolata:wght@400;700', 'Fira+Code:wght@400;700',
+                'Source+Code+Pro:wght@400;700', 'JetBrains+Mono:wght@400;700', 'Overpass+Mono:wght@400;700'
+            );
+            wp_enqueue_style('google-fonts', 'https://fonts.googleapis.com/css2?family=' . implode('&family=', $google_fonts) . '&display=swap', array(), null);
+
+            // Iconify for free clipart/icons
+            wp_enqueue_script('iconify', 'https://code.iconify.design/3/3.1.0/iconify.min.js', array(), '3.1.0', true);
 
             // Plugin styles
             wp_enqueue_style('cpd-frontend', CPD_PLUGIN_URL . 'assets/css/frontend.css', array(), CPD_VERSION);
@@ -201,6 +231,7 @@ class Custom_Product_Designer {
                 'plugin_url' => CPD_PLUGIN_URL,
                 'fonts' => $this->get_available_fonts(),
                 'clipart' => $this->get_clipart_list(),
+                'icon_collections' => $this->get_icon_collections(),
                 'i18n' => array(
                     'add_text' => __('Add Text', 'custom-product-designer'),
                     'add_image' => __('Add Image', 'custom-product-designer'),
@@ -376,44 +407,36 @@ class Custom_Product_Designer {
      */
     private function get_available_fonts() {
         return apply_filters('cpd_available_fonts', array(
-            // Sans-serif
-            'Roboto',
-            'Open Sans',
-            'Lato',
-            'Montserrat',
-            'Oswald',
-            'Raleway',
-            'Poppins',
-            'Ubuntu',
-            'Nunito',
-            'Bebas Neue',
-            'Anton',
-            'Righteous',
-            'Arial',
-            'Helvetica',
-            'Verdana',
+            // Popular Sans-serif
+            'Roboto', 'Open Sans', 'Lato', 'Montserrat', 'Oswald', 'Raleway', 'Poppins', 'Ubuntu', 'Nunito',
+            'PT Sans', 'Source Sans Pro', 'Noto Sans', 'Quicksand', 'Karla', 'Inter', 'Rubik', 'Work Sans',
+            'Fira Sans', 'Barlow', 'DM Sans', 'Manrope', 'Outfit', 'Comfortaa', 'Josefin Sans', 'Cabin',
+            'Oxygen', 'Arial', 'Helvetica', 'Verdana',
 
-            // Serif
-            'Playfair Display',
-            'Merriweather',
-            'Times New Roman',
-            'Georgia',
-            'Abril Fatface',
+            // Serif Fonts
+            'Playfair Display', 'Merriweather', 'Abril Fatface', 'Bitter', 'Arvo', 'Crimson Text',
+            'EB Garamond', 'Lora', 'PT Serif', 'Noto Serif', 'Source Serif Pro', 'Spectral', 'Domine',
+            'Vollkorn', 'Alegreya', 'Libre Baskerville', 'Cormorant', 'Cinzel', 'Times New Roman', 'Georgia',
 
             // Script & Handwriting
-            'Pacifico',
-            'Dancing Script',
-            'Lobster',
-            'Caveat',
-            'Permanent Marker',
-            'Indie Flower',
-            'Shadows Into Light',
-            'Satisfy',
-            'Great Vibes',
+            'Pacifico', 'Dancing Script', 'Lobster', 'Caveat', 'Permanent Marker', 'Indie Flower',
+            'Shadows Into Light', 'Satisfy', 'Great Vibes', 'Amatic SC', 'Architects Daughter',
+            'Gloria Hallelujah', 'Kalam', 'Patrick Hand', 'Rock Salt', 'Reenie Beanie', 'Sacramento',
+            'Tangerine', 'Courgette', 'Cookie', 'Allura', 'Yellowtail', 'Kaushan Script', 'Alex Brush',
+            'Parisienne', 'Pinyon Script', 'Rouge Script', 'Mr Dafoe', 'Mrs Saint Delafield', 'Allison', 'Engagement',
+
+            // Display & Decorative
+            'Bangers', 'Alfa Slab One', 'Bungee', 'Fredoka', 'Lilita One', 'Patua One', 'Bowlby One SC',
+            'Black Ops One', 'Russo One', 'Londrina Solid', 'Titan One', 'Passion One', 'Archivo Black',
+            'Teko', 'Concert One', 'Sigmar One', 'Secular One', 'Bebas Neue', 'Anton', 'Righteous',
+
+            // Modern & Tech
+            'Exo 2', 'Orbitron', 'Audiowide', 'Saira Condensed', 'Fugaz One', 'Contrail One', 'Kanit',
+            'Pathway Gothic One', 'Gruppo', 'Rajdhani', 'Economica', 'Electrolize', 'Iceland',
 
             // Monospace
-            'Courier Prime',
-            'Courier New',
+            'Courier Prime', 'Space Mono', 'IBM Plex Mono', 'Inconsolata', 'Fira Code', 'Source Code Pro',
+            'JetBrains Mono', 'Overpass Mono', 'Share Tech Mono', 'Courier New',
         ));
     }
 
@@ -450,6 +473,44 @@ class Custom_Product_Designer {
         }
 
         return $clipart;
+    }
+
+    /**
+     * Get popular icon collections for Iconify
+     */
+    private function get_icon_collections() {
+        return apply_filters('cpd_icon_collections', array(
+            array(
+                'id' => 'mdi',
+                'name' => 'Material Design Icons',
+                'sample_icons' => array('mdi:heart', 'mdi:star', 'mdi:flag', 'mdi:flower', 'mdi:fire', 'mdi:lightning-bolt', 'mdi:cloud', 'mdi:sun', 'mdi:moon', 'mdi:earth')
+            ),
+            array(
+                'id' => 'fa6-solid',
+                'name' => 'Font Awesome Solid',
+                'sample_icons' => array('fa6-solid:heart', 'fa6-solid:star', 'fa6-solid:circle', 'fa6-solid:square', 'fa6-solid:flag', 'fa6-solid:crown', 'fa6-solid:fire', 'fa6-solid:bolt', 'fa6-solid:cloud', 'fa6-solid:sun')
+            ),
+            array(
+                'id' => 'heroicons',
+                'name' => 'Heroicons',
+                'sample_icons' => array('heroicons:heart', 'heroicons:star', 'heroicons:sparkles', 'heroicons:fire', 'heroicons:bolt', 'heroicons:sun', 'heroicons:moon', 'heroicons:cloud', 'heroicons:flag', 'heroicons:trophy')
+            ),
+            array(
+                'id' => 'bi',
+                'name' => 'Bootstrap Icons',
+                'sample_icons' => array('bi:heart-fill', 'bi:star-fill', 'bi:circle-fill', 'bi:square-fill', 'bi:triangle-fill', 'bi:flower1', 'bi:sun', 'bi:moon', 'bi:cloud', 'bi:lightning')
+            ),
+            array(
+                'id' => 'fluent',
+                'name' => 'Fluent UI',
+                'sample_icons' => array('fluent:heart-24-filled', 'fluent:star-24-filled', 'fluent:circle-24-filled', 'fluent:square-24-filled', 'fluent:weather-sunny-24-filled', 'fluent:weather-moon-24-filled', 'fluent:fire-24-filled', 'fluent:flash-24-filled', 'fluent:cloud-24-filled', 'fluent:trophy-24-filled')
+            ),
+            array(
+                'id' => 'emojione',
+                'name' => 'Emoji One',
+                'sample_icons' => array('emojione:red-heart', 'emojione:star', 'emojione:fire', 'emojione:sparkles', 'emojione:rainbow', 'emojione:sun', 'emojione:full-moon', 'emojione:cloud', 'emojione:lightning', 'emojione:snowflake')
+            ),
+        ));
     }
 
     /**

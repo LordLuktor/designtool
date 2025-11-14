@@ -290,6 +290,9 @@
         // Clipart
         loadClipart();
 
+        // Free Icons
+        loadIconCollections();
+
         // Filters
         $('.cpd-apply-filter').on('click', function() {
             const filter = $(this).data('filter');
@@ -623,6 +626,115 @@
 
             $container.append($img);
         });
+    }
+
+    function loadIconCollections() {
+        const collections = cpdData.icon_collections || [];
+        const $select = $('#cpd-icon-collection');
+        const $iconList = $('#cpd-icon-list');
+
+        // Populate collection dropdown
+        collections.forEach(function(collection) {
+            $select.append($('<option>', {
+                value: collection.id,
+                text: collection.name,
+                'data-icons': JSON.stringify(collection.sample_icons)
+            }));
+        });
+
+        // Load first collection by default
+        if (collections.length > 0) {
+            loadIconSet(collections[0].sample_icons);
+        }
+
+        // Handle collection change
+        $select.on('change', function() {
+            const selectedOption = $(this).find('option:selected');
+            const icons = JSON.parse(selectedOption.attr('data-icons'));
+            loadIconSet(icons);
+        });
+
+        function loadIconSet(icons) {
+            $iconList.empty();
+
+            icons.forEach(function(iconName) {
+                const $iconContainer = $('<div>', {
+                    'class': 'cpd-icon-item',
+                    'title': iconName
+                });
+
+                // Create Iconify icon element
+                const $icon = $('<span>', {
+                    'class': 'iconify',
+                    'data-icon': iconName,
+                    'data-width': '32',
+                    'data-height': '32'
+                });
+
+                $iconContainer.append($icon);
+
+                $iconContainer.on('click', function() {
+                    addIconToCanvas(iconName);
+                });
+
+                $iconList.append($iconContainer);
+            });
+
+            // Trigger Iconify to load the icons
+            if (typeof Iconify !== 'undefined') {
+                Iconify.scan();
+            }
+        }
+    }
+
+    function addIconToCanvas(iconName) {
+        showLoading();
+
+        // Get SVG from Iconify
+        if (typeof Iconify !== 'undefined') {
+            Iconify.renderSVG(iconName, {
+                width: 100,
+                height: 100
+            }).then(function(svg) {
+                if (svg) {
+                    // Convert SVG to string
+                    const serializer = new XMLSerializer();
+                    const svgString = serializer.serializeToString(svg);
+
+                    // Create data URL
+                    const svgBlob = new Blob([svgString], {type: 'image/svg+xml'});
+                    const url = URL.createObjectURL(svgBlob);
+
+                    // Add to canvas
+                    fabric.loadSVGFromURL(url, function(objects, options) {
+                        const obj = fabric.util.groupSVGElements(objects, options);
+
+                        obj.set({
+                            left: currentCanvas.width / 2 - (obj.width * obj.scaleX) / 2,
+                            top: currentCanvas.height / 2 - (obj.height * obj.scaleY) / 2,
+                            scaleX: 1,
+                            scaleY: 1
+                        });
+
+                        currentCanvas.add(obj);
+                        currentCanvas.setActiveObject(obj);
+                        currentCanvas.renderAll();
+
+                        hideLoading();
+                        URL.revokeObjectURL(url);
+                    });
+                } else {
+                    hideLoading();
+                    showNotification('Failed to load icon', 'error');
+                }
+            }).catch(function() {
+                hideLoading();
+                showNotification('Failed to load icon', 'error');
+            });
+        } else {
+            hideLoading();
+            showNotification('Icon library not loaded', 'error');
+        }
     }
 
     function applyFilter(filterType) {

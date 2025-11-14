@@ -204,6 +204,18 @@ class CPD_Frontend {
                         </div>
                         <?php endif; ?>
 
+                        <div class="cpd-tool-section">
+                            <h3><?php echo esc_html__('Free Icons', 'custom-product-designer'); ?></h3>
+                            <label>
+                                <?php echo esc_html__('Icon Collection:', 'custom-product-designer'); ?>
+                                <select id="cpd-icon-collection"></select>
+                            </label>
+                            <div id="cpd-icon-list" class="cpd-icon-grid"></div>
+                            <small style="opacity: 0.7; display: block; margin-top: 5px;">
+                                <?php echo esc_html__('Powered by Iconify - 100,000+ free icons', 'custom-product-designer'); ?>
+                            </small>
+                        </div>
+
                         <?php if (get_option('cpd_enable_effects', 1)): ?>
                         <div class="cpd-tool-section">
                             <h3><?php echo esc_html__('Effects', 'custom-product-designer'); ?></h3>

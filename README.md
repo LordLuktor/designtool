@@ -217,6 +217,24 @@ For issues, questions, or feature requests:
 
 ## Changelog
 
+### Version 1.0.5
+- **Free Icon Library Integration**: Added Iconify API with 100,000+ free icons
+  - 6 popular icon collections: Material Design Icons, Font Awesome, Heroicons, Bootstrap Icons, Fluent UI, Emoji One
+  - Browse icons by collection with dropdown selector
+  - Click to add icons directly to canvas as SVG
+  - All icons are free and legal to use
+  - No API key required
+- **Massive Font Expansion**: Increased from 30 to 130+ Google Fonts
+  - Popular Sans-serif: 29 fonts (Roboto, Inter, DM Sans, Outfit, etc.)
+  - Serif Fonts: 20 fonts (Playfair Display, EB Garamond, Libre Baskerville, etc.)
+  - Script & Handwriting: 36 fonts (Dancing Script, Pacifico, Kaushan Script, etc.)
+  - Display & Decorative: 21 fonts (Bangers, Bungee, Black Ops One, etc.)
+  - Modern & Tech: 14 fonts (Orbitron, Exo 2, Kanit, etc.)
+  - Monospace: 10 fonts (Fira Code, JetBrains Mono, IBM Plex Mono, etc.)
+  - All fonts display in their own style in the dropdown for easy preview
+- **Enhanced Clipart Section**: Reorganized to work alongside free icons
+- Applied `cpd_icon_collections` filter for custom icon collections
+
 ### Version 1.0.4
 - **Enhanced Image Upload Reliability**: Added comprehensive error handling and validation
   - Automatic directory creation and permission checks
