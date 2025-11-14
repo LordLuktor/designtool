@@ -217,6 +217,19 @@ For issues, questions, or feature requests:
 
 ## Changelog
 
+### Version 1.0.2
+- Fixed WooCommerce compatibility warnings
+- Added HPOS (High-Performance Order Storage) compatibility declaration
+- Added Cart and Checkout Blocks compatibility
+- Updated WooCommerce tested up to version 9.0
+
+### Version 1.0.1
+- Security release - Fixed critical and high-severity vulnerabilities
+- Fixed SQL injection vulnerability
+- Enhanced file upload security
+- Added authorization checks
+- Improved input validation
+
 ### Version 1.0.0
 - Initial release
 - Text customization with Google Fonts

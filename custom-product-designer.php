@@ -3,7 +3,7 @@
  * Plugin Name: Custom Product Designer for WooCommerce
  * Plugin URI: https://github.com/LordLuktor/designtool
  * Description: A powerful product customization tool that allows customers to design custom products like t-shirts, cups, caps, and more with text, images, shapes, and effects.
- * Version: 1.0.1
+ * Version: 1.0.2
  * Author: Custom Design Tool
  * Author URI: https://github.com/LordLuktor
  * Text Domain: custom-product-designer
@@ -11,7 +11,7 @@
  * Requires at least: 5.8
  * Requires PHP: 7.4
  * WC requires at least: 5.0
- * WC tested up to: 8.0
+ * WC tested up to: 9.0
  * License: GPL v2 or later
  * License URI: https://www.gnu.org/licenses/gpl-2.0.html
  */
@@ -21,7 +21,7 @@ if (!defined('ABSPATH')) {
 }
 
 // Define plugin constants
-define('CPD_VERSION', '1.0.1');
+define('CPD_VERSION', '1.0.2');
 define('CPD_PLUGIN_DIR', plugin_dir_path(__FILE__));
 define('CPD_PLUGIN_URL', plugin_dir_url(__FILE__));
 define('CPD_PLUGIN_BASENAME', plugin_basename(__FILE__));
@@ -58,6 +58,9 @@ class Custom_Product_Designer {
      * Initialize hooks
      */
     private function init_hooks() {
+        // Declare WooCommerce feature compatibility
+        add_action('before_woocommerce_init', array($this, 'declare_woocommerce_compatibility'));
+
         // Check if WooCommerce is active
         add_action('plugins_loaded', array($this, 'check_dependencies'));
 
@@ -87,6 +90,27 @@ class Custom_Product_Designer {
         add_filter('woocommerce_get_item_data', array($this, 'display_cart_item_data'), 10, 2);
         add_action('woocommerce_checkout_create_order_line_item', array($this, 'add_order_item_meta'), 10, 4);
         add_action('woocommerce_order_item_meta_end', array($this, 'display_order_item_meta'), 10, 3);
+    }
+
+    /**
+     * Declare WooCommerce feature compatibility
+     */
+    public function declare_woocommerce_compatibility() {
+        if (class_exists('\Automattic\WooCommerce\Utilities\FeaturesUtil')) {
+            // Declare compatibility with WooCommerce HPOS (High-Performance Order Storage)
+            \Automattic\WooCommerce\Utilities\FeaturesUtil::declare_compatibility(
+                'custom_order_tables',
+                __FILE__,
+                true
+            );
+
+            // Declare compatibility with WooCommerce Cart and Checkout Blocks
+            \Automattic\WooCommerce\Utilities\FeaturesUtil::declare_compatibility(
+                'cart_checkout_blocks',
+                __FILE__,
+                true
+            );
+        }
     }
 
     /**
