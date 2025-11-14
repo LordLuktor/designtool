@@ -25,11 +25,18 @@ delete_option('cpd_designer_heading');
 // Remove product meta
 global $wpdb;
 
-$wpdb->query("DELETE FROM {$wpdb->postmeta} WHERE meta_key LIKE '_enable_designer%'");
-$wpdb->query("DELETE FROM {$wpdb->postmeta} WHERE meta_key LIKE '_designer_%'");
+// Use prepared statements to prevent SQL injection
+$wpdb->query($wpdb->prepare(
+    "DELETE FROM {$wpdb->postmeta} WHERE meta_key LIKE %s OR meta_key LIKE %s",
+    '_enable\_designer%',
+    '\_designer\_%'
+));
 
-// Remove order meta
-$wpdb->query("DELETE FROM {$wpdb->prefix}woocommerce_order_itemmeta WHERE meta_key LIKE '_cpd_%'");
+// Remove order meta - use proper escaping
+$wpdb->query($wpdb->prepare(
+    "DELETE FROM {$wpdb->prefix}woocommerce_order_itemmeta WHERE meta_key LIKE %s",
+    '\_cpd\_%'
+));
 
 // Optionally remove uploaded designs
 // Uncomment the following lines if you want to delete all design files on uninstall

@@ -54,17 +54,85 @@ class CPD_Admin {
      * Register settings
      */
     public function register_settings() {
-        register_setting('cpd_settings', 'cpd_canvas_bg_color');
-        register_setting('cpd_settings', 'cpd_canvas_text_color');
-        register_setting('cpd_settings', 'cpd_button_color');
-        register_setting('cpd_settings', 'cpd_enable_text');
-        register_setting('cpd_settings', 'cpd_enable_images');
-        register_setting('cpd_settings', 'cpd_enable_shapes');
-        register_setting('cpd_settings', 'cpd_enable_clipart');
-        register_setting('cpd_settings', 'cpd_enable_effects');
-        register_setting('cpd_settings', 'cpd_max_upload_size');
-        register_setting('cpd_settings', 'cpd_allowed_image_types');
-        register_setting('cpd_settings', 'cpd_designer_heading');
+        // Security: Add sanitization callbacks to all settings
+        register_setting('cpd_settings', 'cpd_canvas_bg_color', array(
+            'sanitize_callback' => 'sanitize_hex_color',
+            'default' => '#ffffff'
+        ));
+        register_setting('cpd_settings', 'cpd_canvas_text_color', array(
+            'sanitize_callback' => 'sanitize_hex_color',
+            'default' => '#000000'
+        ));
+        register_setting('cpd_settings', 'cpd_button_color', array(
+            'sanitize_callback' => 'sanitize_hex_color',
+            'default' => '#0073aa'
+        ));
+        register_setting('cpd_settings', 'cpd_enable_text', array(
+            'sanitize_callback' => array($this, 'sanitize_checkbox'),
+            'default' => 1
+        ));
+        register_setting('cpd_settings', 'cpd_enable_images', array(
+            'sanitize_callback' => array($this, 'sanitize_checkbox'),
+            'default' => 1
+        ));
+        register_setting('cpd_settings', 'cpd_enable_shapes', array(
+            'sanitize_callback' => array($this, 'sanitize_checkbox'),
+            'default' => 1
+        ));
+        register_setting('cpd_settings', 'cpd_enable_clipart', array(
+            'sanitize_callback' => array($this, 'sanitize_checkbox'),
+            'default' => 1
+        ));
+        register_setting('cpd_settings', 'cpd_enable_effects', array(
+            'sanitize_callback' => array($this, 'sanitize_checkbox'),
+            'default' => 1
+        ));
+        register_setting('cpd_settings', 'cpd_max_upload_size', array(
+            'sanitize_callback' => array($this, 'sanitize_upload_size'),
+            'default' => 5
+        ));
+        register_setting('cpd_settings', 'cpd_allowed_image_types', array(
+            'sanitize_callback' => array($this, 'sanitize_image_types'),
+            'default' => 'jpg,jpeg,png,gif'
+        ));
+        register_setting('cpd_settings', 'cpd_designer_heading', array(
+            'sanitize_callback' => 'sanitize_text_field',
+            'default' => 'Design Your Product'
+        ));
+    }
+
+    /**
+     * Sanitize checkbox value
+     */
+    public function sanitize_checkbox($value) {
+        return ($value == 1) ? 1 : 0;
+    }
+
+    /**
+     * Sanitize upload size
+     */
+    public function sanitize_upload_size($value) {
+        $size = absint($value);
+        return ($size >= 1 && $size <= 20) ? $size : 5;
+    }
+
+    /**
+     * Sanitize image types
+     */
+    public function sanitize_image_types($value) {
+        // Security: Validate only allowed extensions
+        $types = explode(',', $value);
+        $allowed = array('jpg', 'jpeg', 'png', 'gif', 'svg', 'webp');
+        $sanitized = array();
+
+        foreach ($types as $type) {
+            $type = trim(strtolower($type));
+            if (in_array($type, $allowed) && preg_match('/^[a-z]+$/', $type)) {
+                $sanitized[] = $type;
+            }
+        }
+
+        return !empty($sanitized) ? implode(',', $sanitized) : 'jpg,jpeg,png,gif';
     }
 
     /**
@@ -247,12 +315,62 @@ class CPD_Admin {
      * Handle clipart upload
      */
     private function handle_clipart_upload() {
+        // Security: Verify user has capability
+        if (!current_user_can('manage_options')) {
+            echo '<div class="notice notice-error"><p>' .
+                 esc_html__('You do not have permission to upload clipart.', 'custom-product-designer') . '</p></div>';
+            return;
+        }
+
+        // Security: Verify file was uploaded
+        if (!isset($_FILES['cpd_clipart_file']) || !is_uploaded_file($_FILES['cpd_clipart_file']['tmp_name'])) {
+            echo '<div class="notice notice-error"><p>' .
+                 esc_html__('No file uploaded.', 'custom-product-designer') . '</p></div>';
+            return;
+        }
+
         if (!function_exists('wp_handle_upload')) {
             require_once(ABSPATH . 'wp-admin/includes/file.php');
         }
 
         $uploadedfile = $_FILES['cpd_clipart_file'];
-        $upload_overrides = array('test_form' => false);
+
+        // Security: Validate file size (max 5MB for clipart)
+        if ($uploadedfile['size'] > 5242880) {
+            echo '<div class="notice notice-error"><p>' .
+                 esc_html__('File size too large. Maximum 5MB allowed for clipart.', 'custom-product-designer') . '</p></div>';
+            return;
+        }
+
+        // Security: Validate file extension
+        $filename = sanitize_file_name($uploadedfile['name']);
+        $file_ext = strtolower(pathinfo($filename, PATHINFO_EXTENSION));
+        $allowed_ext = array('png', 'svg', 'jpg', 'jpeg', 'gif');
+
+        if (!in_array($file_ext, $allowed_ext)) {
+            echo '<div class="notice notice-error"><p>' .
+                 esc_html__('Invalid file type. Only PNG, SVG, JPG, and GIF files are allowed.', 'custom-product-designer') . '</p></div>';
+            return;
+        }
+
+        // Security: Validate MIME type
+        $finfo = finfo_open(FILEINFO_MIME_TYPE);
+        $mime_type = finfo_file($finfo, $uploadedfile['tmp_name']);
+        finfo_close($finfo);
+
+        $allowed_mimes = array(
+            'image/jpeg',
+            'image/jpg',
+            'image/png',
+            'image/gif',
+            'image/svg+xml'
+        );
+
+        if (!in_array($mime_type, $allowed_mimes)) {
+            echo '<div class="notice notice-error"><p>' .
+                 esc_html__('Invalid file type detected.', 'custom-product-designer') . '</p></div>';
+            return;
+        }
 
         // Create clipart directory if it doesn't exist
         $clipart_dir = CPD_PLUGIN_DIR . 'assets/clipart/';
@@ -260,10 +378,25 @@ class CPD_Admin {
             wp_mkdir_p($clipart_dir);
         }
 
-        $filename = sanitize_file_name($uploadedfile['name']);
-        $destination = $clipart_dir . $filename;
+        // Security: Generate unique filename to prevent overwrites
+        $pathinfo = pathinfo($filename);
+        $unique_filename = $pathinfo['filename'] . '_' . time() . '.' . $pathinfo['extension'];
+        $destination = $clipart_dir . $unique_filename;
+
+        // Security: Ensure destination is within the clipart directory
+        $real_clipart_dir = realpath($clipart_dir);
+        $real_destination = realpath(dirname($destination)) . '/' . basename($destination);
+
+        if (strpos($real_destination, $real_clipart_dir) !== 0) {
+            echo '<div class="notice notice-error"><p>' .
+                 esc_html__('Invalid upload destination.', 'custom-product-designer') . '</p></div>';
+            return;
+        }
 
         if (move_uploaded_file($uploadedfile['tmp_name'], $destination)) {
+            // Security: Set file permissions
+            chmod($destination, 0644);
+
             echo '<div class="notice notice-success"><p>' .
                  esc_html__('Clipart uploaded successfully!', 'custom-product-designer') . '</p></div>';
         } else {
@@ -321,13 +454,44 @@ class CPD_Admin {
 
         // Handle deletion
         if (isset($_POST['cpd_delete_clipart']) && check_admin_referer('cpd_delete_clipart', 'cpd_delete_nonce')) {
+            // Security: Verify user has capability
+            if (!current_user_can('manage_options')) {
+                echo '<div class="notice notice-error"><p>' .
+                     esc_html__('You do not have permission to delete clipart.', 'custom-product-designer') . '</p></div>';
+                return;
+            }
+
             $file = sanitize_file_name($_POST['cpd_clipart_file']);
+
+            // Security: Validate filename (no path traversal)
+            if (empty($file) || $file === '.' || $file === '..' || strpos($file, '..') !== false || strpos($file, '/') !== false) {
+                echo '<div class="notice notice-error"><p>' .
+                     esc_html__('Invalid filename.', 'custom-product-designer') . '</p></div>';
+                return;
+            }
+
             $file_path = $clipart_dir . $file;
-            if (file_exists($file_path)) {
-                unlink($file_path);
-                echo '<div class="notice notice-success"><p>' .
-                     esc_html__('Clipart deleted successfully!', 'custom-product-designer') . '</p></div>';
-                echo '<meta http-equiv="refresh" content="0">';
+
+            // Security: Ensure file is within clipart directory using realpath
+            $real_clipart_dir = realpath($clipart_dir);
+            $real_file_path = realpath($file_path);
+
+            if ($real_file_path === false || strpos($real_file_path, $real_clipart_dir) !== 0) {
+                echo '<div class="notice notice-error"><p>' .
+                     esc_html__('Invalid file path.', 'custom-product-designer') . '</p></div>';
+                return;
+            }
+
+            // Security: Verify it's a file, not a directory
+            if (file_exists($real_file_path) && is_file($real_file_path)) {
+                if (unlink($real_file_path)) {
+                    echo '<div class="notice notice-success"><p>' .
+                         esc_html__('Clipart deleted successfully!', 'custom-product-designer') . '</p></div>';
+                    echo '<meta http-equiv="refresh" content="0">';
+                } else {
+                    echo '<div class="notice notice-error"><p>' .
+                         esc_html__('Failed to delete clipart.', 'custom-product-designer') . '</p></div>';
+                }
             }
         }
     }

@@ -3,7 +3,7 @@
  * Plugin Name: Custom Product Designer for WooCommerce
  * Plugin URI: https://github.com/LordLuktor/designtool
  * Description: A powerful product customization tool that allows customers to design custom products like t-shirts, cups, caps, and more with text, images, shapes, and effects.
- * Version: 1.0.0
+ * Version: 1.0.1
  * Author: Custom Design Tool
  * Author URI: https://github.com/LordLuktor
  * Text Domain: custom-product-designer
@@ -21,7 +21,7 @@ if (!defined('ABSPATH')) {
 }
 
 // Define plugin constants
-define('CPD_VERSION', '1.0.0');
+define('CPD_VERSION', '1.0.1');
 define('CPD_PLUGIN_DIR', plugin_dir_path(__FILE__));
 define('CPD_PLUGIN_URL', plugin_dir_url(__FILE__));
 define('CPD_PLUGIN_BASENAME', plugin_basename(__FILE__));
@@ -282,6 +282,16 @@ class Custom_Product_Designer {
      * Save custom product data
      */
     public function save_product_data($post_id) {
+        // Security: Check user capabilities
+        if (!current_user_can('edit_product', $post_id)) {
+            return;
+        }
+
+        // Security: Verify nonce (WooCommerce handles this, but double-check)
+        if (!isset($_POST['woocommerce_meta_nonce']) || !wp_verify_nonce($_POST['woocommerce_meta_nonce'], 'woocommerce_save_data')) {
+            return;
+        }
+
         $enable_designer = isset($_POST['_enable_designer']) ? 'yes' : 'no';
         update_post_meta($post_id, '_enable_designer', $enable_designer);
 
@@ -289,19 +299,35 @@ class Custom_Product_Designer {
         update_post_meta($post_id, '_designer_enable_back', $enable_back);
 
         if (isset($_POST['_designer_extra_cost'])) {
-            update_post_meta($post_id, '_designer_extra_cost', sanitize_text_field($_POST['_designer_extra_cost']));
+            // Security: Validate as positive number
+            $extra_cost = floatval($_POST['_designer_extra_cost']);
+            if ($extra_cost >= 0 && $extra_cost <= 10000) { // Max $10,000
+                update_post_meta($post_id, '_designer_extra_cost', $extra_cost);
+            }
         }
 
         if (isset($_POST['_designer_canvas_width'])) {
-            update_post_meta($post_id, '_designer_canvas_width', absint($_POST['_designer_canvas_width']));
+            // Security: Limit canvas dimensions to prevent DoS
+            $width = absint($_POST['_designer_canvas_width']);
+            if ($width >= 100 && $width <= 5000) { // Max 5000px
+                update_post_meta($post_id, '_designer_canvas_width', $width);
+            }
         }
 
         if (isset($_POST['_designer_canvas_height'])) {
-            update_post_meta($post_id, '_designer_canvas_height', absint($_POST['_designer_canvas_height']));
+            // Security: Limit canvas dimensions to prevent DoS
+            $height = absint($_POST['_designer_canvas_height']);
+            if ($height >= 100 && $height <= 5000) { // Max 5000px
+                update_post_meta($post_id, '_designer_canvas_height', $height);
+            }
         }
 
         if (isset($_POST['_designer_product_image'])) {
-            update_post_meta($post_id, '_designer_product_image', esc_url_raw($_POST['_designer_product_image']));
+            // Security: Validate URL is properly formatted
+            $url = esc_url_raw($_POST['_designer_product_image']);
+            if (filter_var($url, FILTER_VALIDATE_URL)) {
+                update_post_meta($post_id, '_designer_product_image', $url);
+            }
         }
     }
 
@@ -349,8 +375,23 @@ class Custom_Product_Designer {
         if (is_dir($clipart_dir)) {
             $files = scandir($clipart_dir);
             foreach ($files as $file) {
-                if (in_array(pathinfo($file, PATHINFO_EXTENSION), array('png', 'svg', 'jpg'))) {
-                    $clipart[] = $clipart_url . $file;
+                // Security: Prevent path traversal attacks
+                if ($file === '.' || $file === '..' || strpos($file, '..') !== false) {
+                    continue;
+                }
+
+                // Security: Validate filename (alphanumeric, dash, underscore, dot only)
+                if (!preg_match('/^[a-zA-Z0-9_\-\.]+$/', $file)) {
+                    continue;
+                }
+
+                $extension = strtolower(pathinfo($file, PATHINFO_EXTENSION));
+                if (in_array($extension, array('png', 'svg', 'jpg', 'jpeg', 'gif'))) {
+                    // Security: Verify file actually exists in the clipart directory
+                    $file_path = $clipart_dir . $file;
+                    if (file_exists($file_path) && is_file($file_path)) {
+                        $clipart[] = $clipart_url . rawurlencode($file);
+                    }
                 }
             }
         }
@@ -367,6 +408,25 @@ class Custom_Product_Designer {
         $design_data = isset($_POST['design_data']) ? json_decode(stripslashes($_POST['design_data']), true) : array();
         $design_image = isset($_POST['design_image']) ? $_POST['design_image'] : '';
 
+        // Security: Validate design data size to prevent DoS
+        $design_data_json = wp_json_encode($design_data);
+        if (strlen($design_data_json) > 1048576) { // Max 1MB of JSON data
+            wp_send_json_error(array('message' => __('Design data is too large', 'custom-product-designer')));
+            return;
+        }
+
+        // Security: Validate base64 image size
+        if (!empty($design_image) && strlen($design_image) > 10485760) { // Max 10MB base64
+            wp_send_json_error(array('message' => __('Design image is too large', 'custom-product-designer')));
+            return;
+        }
+
+        // Security: Validate base64 format
+        if (!empty($design_image) && !preg_match('/^data:image\/(png|jpeg|jpg);base64,/', $design_image)) {
+            wp_send_json_error(array('message' => __('Invalid image format', 'custom-product-designer')));
+            return;
+        }
+
         // Save design data to session or temporary storage
         WC()->session->set('cpd_design_data', $design_data);
         WC()->session->set('cpd_design_image', $design_image);
@@ -380,12 +440,64 @@ class Custom_Product_Designer {
     public function ajax_upload_image() {
         check_ajax_referer('cpd_nonce', 'nonce');
 
+        // Security: Check if file was uploaded
+        if (!isset($_FILES['image']) || !is_uploaded_file($_FILES['image']['tmp_name'])) {
+            wp_send_json_error(array('message' => __('No file uploaded', 'custom-product-designer')));
+            return;
+        }
+
         if (!function_exists('wp_handle_upload')) {
             require_once(ABSPATH . 'wp-admin/includes/file.php');
         }
 
         $uploadedfile = $_FILES['image'];
-        $upload_overrides = array('test_form' => false);
+
+        // Security: Validate file size before processing
+        $max_size = get_option('cpd_max_upload_size', 5) * 1024 * 1024;
+        if ($uploadedfile['size'] > $max_size) {
+            wp_send_json_error(array('message' => sprintf(
+                __('File size exceeds maximum allowed size of %s MB', 'custom-product-designer'),
+                get_option('cpd_max_upload_size', 5)
+            )));
+            return;
+        }
+
+        // Security: Validate file type
+        $allowed_types = explode(',', get_option('cpd_allowed_image_types', 'jpg,jpeg,png,gif'));
+        $allowed_types = array_map('trim', $allowed_types);
+        $file_ext = strtolower(pathinfo($uploadedfile['name'], PATHINFO_EXTENSION));
+
+        if (!in_array($file_ext, $allowed_types)) {
+            wp_send_json_error(array('message' => __('Invalid file type', 'custom-product-designer')));
+            return;
+        }
+
+        // Security: Validate MIME type
+        $finfo = finfo_open(FILEINFO_MIME_TYPE);
+        $mime_type = finfo_file($finfo, $uploadedfile['tmp_name']);
+        finfo_close($finfo);
+
+        $allowed_mimes = array(
+            'image/jpeg',
+            'image/jpg',
+            'image/png',
+            'image/gif'
+        );
+
+        if (!in_array($mime_type, $allowed_mimes)) {
+            wp_send_json_error(array('message' => __('Invalid file type', 'custom-product-designer')));
+            return;
+        }
+
+        // Security: Set strict upload overrides
+        $upload_overrides = array(
+            'test_form' => false,
+            'mimes' => array(
+                'jpg|jpeg|jpe' => 'image/jpeg',
+                'gif' => 'image/gif',
+                'png' => 'image/png',
+            ),
+        );
 
         // Upload to custom directory
         add_filter('upload_dir', array($this, 'custom_upload_dir'));
@@ -395,7 +507,7 @@ class Custom_Product_Designer {
         if ($movefile && !isset($movefile['error'])) {
             wp_send_json_success(array('url' => $movefile['url']));
         } else {
-            wp_send_json_error(array('message' => $movefile['error']));
+            wp_send_json_error(array('message' => isset($movefile['error']) ? $movefile['error'] : __('Upload failed', 'custom-product-designer')));
         }
     }
 
@@ -416,7 +528,8 @@ class Custom_Product_Designer {
         if (isset($_POST['cpd_design_data'])) {
             $cart_item_data['cpd_design_data'] = sanitize_text_field($_POST['cpd_design_data']);
             $cart_item_data['cpd_design_image'] = sanitize_text_field($_POST['cpd_design_image']);
-            $cart_item_data['unique_key'] = md5(microtime() . rand());
+            // Security: Use cryptographically secure random for unique key
+            $cart_item_data['unique_key'] = md5(microtime() . wp_rand() . wp_generate_password(20, true, true));
         }
         return $cart_item_data;
     }
