@@ -3,7 +3,7 @@
  * Plugin Name: Custom Product Designer for WooCommerce
  * Plugin URI: https://github.com/LordLuktor/designtool
  * Description: A powerful product customization tool that allows customers to design custom products like t-shirts, cups, caps, and more with text, images, shapes, and effects.
- * Version: 1.0.3
+ * Version: 1.0.4
  * Author: Custom Design Tool
  * Author URI: https://github.com/LordLuktor
  * Text Domain: custom-product-designer
@@ -25,7 +25,7 @@ if (!defined('ABSPATH')) {
 }
 
 // Define plugin constants
-define('CPD_VERSION', '1.0.3');
+define('CPD_VERSION', '1.0.4');
 define('CPD_PLUGIN_DIR', plugin_dir_path(__FILE__));
 define('CPD_PLUGIN_URL', plugin_dir_url(__FILE__));
 define('CPD_PLUGIN_BASENAME', plugin_basename(__FILE__));
@@ -185,8 +185,8 @@ class Custom_Product_Designer {
             // Fabric.js for canvas manipulation
             wp_enqueue_script('fabricjs', 'https://cdnjs.cloudflare.com/ajax/libs/fabric.js/5.3.0/fabric.min.js', array(), '5.3.0', true);
 
-            // Google Fonts
-            wp_enqueue_style('google-fonts', 'https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&family=Open+Sans:wght@400;700&family=Lato:wght@400;700&family=Montserrat:wght@400;700&family=Oswald:wght@400;700&family=Raleway:wght@400;700&family=Poppins:wght@400;700&family=Playfair+Display:wght@400;700&display=swap', array(), null);
+            // Google Fonts - Expanded font library
+            wp_enqueue_style('google-fonts', 'https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&family=Open+Sans:wght@400;700&family=Lato:wght@400;700&family=Montserrat:wght@400;700&family=Oswald:wght@400;700&family=Raleway:wght@400;700&family=Poppins:wght@400;700&family=Playfair+Display:wght@400;700&family=Merriweather:wght@400;700&family=Ubuntu:wght@400;700&family=Nunito:wght@400;700&family=Pacifico&family=Dancing+Script:wght@400;700&family=Lobster&family=Bebas+Neue&family=Anton&family=Abril+Fatface&family=Righteous&family=Caveat:wght@400;700&family=Permanent+Marker&family=Indie+Flower&family=Shadows+Into+Light&family=Satisfy&family=Great+Vibes&family=Courier+Prime:wght@400;700&display=swap', array(), null);
 
             // Plugin styles
             wp_enqueue_style('cpd-frontend', CPD_PLUGIN_URL . 'assets/css/frontend.css', array(), CPD_VERSION);
@@ -375,7 +375,8 @@ class Custom_Product_Designer {
      * Get available fonts
      */
     private function get_available_fonts() {
-        return array(
+        return apply_filters('cpd_available_fonts', array(
+            // Sans-serif
             'Roboto',
             'Open Sans',
             'Lato',
@@ -383,13 +384,37 @@ class Custom_Product_Designer {
             'Oswald',
             'Raleway',
             'Poppins',
-            'Playfair Display',
+            'Ubuntu',
+            'Nunito',
+            'Bebas Neue',
+            'Anton',
+            'Righteous',
             'Arial',
             'Helvetica',
+            'Verdana',
+
+            // Serif
+            'Playfair Display',
+            'Merriweather',
             'Times New Roman',
             'Georgia',
-            'Verdana',
-        );
+            'Abril Fatface',
+
+            // Script & Handwriting
+            'Pacifico',
+            'Dancing Script',
+            'Lobster',
+            'Caveat',
+            'Permanent Marker',
+            'Indie Flower',
+            'Shadows Into Light',
+            'Satisfy',
+            'Great Vibes',
+
+            // Monospace
+            'Courier Prime',
+            'Courier New',
+        ));
     }
 
     /**

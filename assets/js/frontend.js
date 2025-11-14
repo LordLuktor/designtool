@@ -143,9 +143,14 @@
 
         // Font family
         $('#cpd-font-family').on('change', function() {
+            const selectedFont = $(this).val();
             const activeObject = currentCanvas.getActiveObject();
+
+            // Update select element to show selected font
+            $(this).css('font-family', selectedFont);
+
             if (activeObject && (activeObject.type === 'i-text' || activeObject.type === 'text')) {
-                activeObject.set('fontFamily', $(this).val());
+                activeObject.set('fontFamily', selectedFont);
                 currentCanvas.renderAll();
             }
         });
@@ -212,8 +217,72 @@
 
         $('#cpd-shape-color').on('change', function() {
             const activeObject = currentCanvas.getActiveObject();
-            if (activeObject && (activeObject.type === 'rect' || activeObject.type === 'circle' || activeObject.type === 'triangle')) {
+            if (activeObject && (activeObject.type === 'rect' || activeObject.type === 'circle' || activeObject.type === 'triangle' || activeObject.type === 'polygon' || activeObject.type === 'path')) {
                 activeObject.set('fill', $(this).val());
+                currentCanvas.renderAll();
+            }
+        });
+
+        $('#cpd-shape-stroke-color').on('change', function() {
+            const activeObject = currentCanvas.getActiveObject();
+            if (activeObject && (activeObject.type === 'rect' || activeObject.type === 'circle' || activeObject.type === 'triangle' || activeObject.type === 'polygon' || activeObject.type === 'line' || activeObject.type === 'path')) {
+                activeObject.set('stroke', $(this).val());
+                currentCanvas.renderAll();
+            }
+        });
+
+        $('#cpd-shape-stroke-width').on('input', function() {
+            const activeObject = currentCanvas.getActiveObject();
+            if (activeObject && (activeObject.type === 'rect' || activeObject.type === 'circle' || activeObject.type === 'triangle' || activeObject.type === 'polygon' || activeObject.type === 'line' || activeObject.type === 'path')) {
+                activeObject.set('strokeWidth', parseInt($(this).val()));
+                currentCanvas.renderAll();
+            }
+        });
+
+        // Background color
+        $('#cpd-apply-bg-color').on('click', function() {
+            const color = $('#cpd-canvas-bg-color').val();
+            currentCanvas.setBackgroundColor(color, currentCanvas.renderAll.bind(currentCanvas));
+        });
+
+        // Alignment buttons
+        $('#cpd-align-left').on('click', function() {
+            alignObject('left');
+        });
+
+        $('#cpd-align-center').on('click', function() {
+            alignObject('center');
+        });
+
+        $('#cpd-align-right').on('click', function() {
+            alignObject('right');
+        });
+
+        $('#cpd-align-top').on('click', function() {
+            alignObject('top');
+        });
+
+        $('#cpd-align-middle').on('click', function() {
+            alignObject('middle');
+        });
+
+        $('#cpd-align-bottom').on('click', function() {
+            alignObject('bottom');
+        });
+
+        // Layer order
+        $('#cpd-bring-forward').on('click', function() {
+            const activeObject = currentCanvas.getActiveObject();
+            if (activeObject) {
+                currentCanvas.bringForward(activeObject);
+                currentCanvas.renderAll();
+            }
+        });
+
+        $('#cpd-send-backward').on('click', function() {
+            const activeObject = currentCanvas.getActiveObject();
+            if (activeObject) {
+                currentCanvas.sendBackwards(activeObject);
                 currentCanvas.renderAll();
             }
         });
@@ -255,11 +324,18 @@
         const $select = $('#cpd-font-family');
 
         fonts.forEach(function(font) {
-            $select.append($('<option>', {
+            const $option = $('<option>', {
                 value: font,
                 text: font
-            }));
+            });
+
+            // Apply font style to option
+            $option.css('font-family', font);
+            $select.append($option);
         });
+
+        // Apply font to the select element itself when changed
+        $select.css('font-family', fonts[0]);
     }
 
     function addText(text) {
@@ -301,8 +377,22 @@
         }
     }
 
-    function uploadImage(file) {
+    function uploadImage(file, retryCount = 0) {
         if (!file) return;
+
+        // Validate file type
+        const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif'];
+        if (!allowedTypes.includes(file.type)) {
+            showNotification('Invalid file type. Please upload a JPG, PNG, or GIF image.', 'error');
+            return;
+        }
+
+        // Validate file size (5MB default)
+        const maxSize = 5 * 1024 * 1024;
+        if (file.size > maxSize) {
+            showNotification('File size exceeds maximum allowed size of 5 MB', 'error');
+            return;
+        }
 
         const formData = new FormData();
         formData.append('action', 'cpd_upload_image');
@@ -317,17 +407,38 @@
             data: formData,
             processData: false,
             contentType: false,
+            timeout: 30000, // 30 second timeout
             success: function(response) {
                 hideLoading();
                 if (response.success) {
                     addImageToCanvas(response.data.url);
+                    showNotification('Image uploaded successfully!', 'success');
                 } else {
                     showNotification(response.data.message || cpdData.i18n.error, 'error');
                 }
             },
-            error: function() {
+            error: function(xhr, status, error) {
                 hideLoading();
-                showNotification(cpdData.i18n.error, 'error');
+
+                // Retry logic for network errors
+                if (retryCount < 3 && (status === 'timeout' || status === 'error')) {
+                    const delay = Math.pow(2, retryCount) * 1000; // Exponential backoff: 1s, 2s, 4s
+                    showNotification('Upload failed. Retrying in ' + (delay/1000) + ' seconds...', 'error');
+
+                    setTimeout(function() {
+                        uploadImage(file, retryCount + 1);
+                    }, delay);
+                } else {
+                    let errorMsg = cpdData.i18n.error || 'An error occurred. Please try again.';
+
+                    if (status === 'timeout') {
+                        errorMsg = 'Upload timed out. Please check your connection and try again.';
+                    } else if (xhr.responseJSON && xhr.responseJSON.data && xhr.responseJSON.data.message) {
+                        errorMsg = xhr.responseJSON.data.message;
+                    }
+
+                    showNotification(errorMsg, 'error');
+                }
             }
         });
     }
@@ -357,6 +468,8 @@
     function addShape(shape) {
         let shapeObj;
         const color = $('#cpd-shape-color').val() || '#ff0000';
+        const strokeColor = $('#cpd-shape-stroke-color').val() || '#000000';
+        const strokeWidth = parseInt($('#cpd-shape-stroke-width').val()) || 0;
 
         switch (shape) {
             case 'rect':
@@ -365,7 +478,9 @@
                     top: 100,
                     width: 100,
                     height: 100,
-                    fill: color
+                    fill: color,
+                    stroke: strokeColor,
+                    strokeWidth: strokeWidth
                 });
                 break;
             case 'circle':
@@ -373,7 +488,9 @@
                     left: 100,
                     top: 100,
                     radius: 50,
-                    fill: color
+                    fill: color,
+                    stroke: strokeColor,
+                    strokeWidth: strokeWidth
                 });
                 break;
             case 'triangle':
@@ -382,7 +499,40 @@
                     top: 100,
                     width: 100,
                     height: 100,
-                    fill: color
+                    fill: color,
+                    stroke: strokeColor,
+                    strokeWidth: strokeWidth
+                });
+                break;
+            case 'star':
+                // Create a 5-pointed star
+                const starPoints = createStarPoints(5, 50, 25);
+                shapeObj = new fabric.Polygon(starPoints, {
+                    left: 100,
+                    top: 100,
+                    fill: color,
+                    stroke: strokeColor,
+                    strokeWidth: strokeWidth
+                });
+                break;
+            case 'polygon':
+                // Create a hexagon
+                const hexPoints = createPolygonPoints(6, 50);
+                shapeObj = new fabric.Polygon(hexPoints, {
+                    left: 100,
+                    top: 100,
+                    fill: color,
+                    stroke: strokeColor,
+                    strokeWidth: strokeWidth
+                });
+                break;
+            case 'line':
+                shapeObj = new fabric.Line([50, 50, 200, 50], {
+                    left: 100,
+                    top: 100,
+                    stroke: strokeColor,
+                    strokeWidth: strokeWidth || 2,
+                    fill: null
                 });
                 break;
         }
@@ -392,6 +542,68 @@
             currentCanvas.setActiveObject(shapeObj);
             currentCanvas.renderAll();
         }
+    }
+
+    function createStarPoints(points, outerRadius, innerRadius) {
+        const step = Math.PI / points;
+        const starPoints = [];
+
+        for (let i = 0; i < points * 2; i++) {
+            const radius = i % 2 === 0 ? outerRadius : innerRadius;
+            const angle = i * step - Math.PI / 2;
+            starPoints.push({
+                x: radius * Math.cos(angle),
+                y: radius * Math.sin(angle)
+            });
+        }
+
+        return starPoints;
+    }
+
+    function createPolygonPoints(sides, radius) {
+        const points = [];
+        const angle = (Math.PI * 2) / sides;
+
+        for (let i = 0; i < sides; i++) {
+            points.push({
+                x: radius * Math.cos(angle * i - Math.PI / 2),
+                y: radius * Math.sin(angle * i - Math.PI / 2)
+            });
+        }
+
+        return points;
+    }
+
+    function alignObject(alignment) {
+        const activeObject = currentCanvas.getActiveObject();
+        if (!activeObject) {
+            showNotification('Please select an object first', 'error');
+            return;
+        }
+
+        switch (alignment) {
+            case 'left':
+                activeObject.set('left', 0);
+                break;
+            case 'center':
+                activeObject.set('left', (currentCanvas.width - activeObject.width * activeObject.scaleX) / 2);
+                break;
+            case 'right':
+                activeObject.set('left', currentCanvas.width - activeObject.width * activeObject.scaleX);
+                break;
+            case 'top':
+                activeObject.set('top', 0);
+                break;
+            case 'middle':
+                activeObject.set('top', (currentCanvas.height - activeObject.height * activeObject.scaleY) / 2);
+                break;
+            case 'bottom':
+                activeObject.set('top', currentCanvas.height - activeObject.height * activeObject.scaleY);
+                break;
+        }
+
+        activeObject.setCoords();
+        currentCanvas.renderAll();
     }
 
     function loadClipart() {
@@ -495,8 +707,10 @@
             $('#cpd-font-size').val(activeObject.fontSize);
             $('#cpd-text-color').val(activeObject.fill);
             $('#cpd-text-options').slideDown();
-        } else if (activeObject.type === 'rect' || activeObject.type === 'circle' || activeObject.type === 'triangle') {
-            $('#cpd-shape-color').val(activeObject.fill);
+        } else if (activeObject.type === 'rect' || activeObject.type === 'circle' || activeObject.type === 'triangle' || activeObject.type === 'polygon' || activeObject.type === 'line' || activeObject.type === 'path') {
+            $('#cpd-shape-color').val(activeObject.fill || '#ff0000');
+            $('#cpd-shape-stroke-color').val(activeObject.stroke || '#000000');
+            $('#cpd-shape-stroke-width').val(activeObject.strokeWidth || 0);
             $('#cpd-shape-options').slideDown();
         }
     }

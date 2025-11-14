@@ -74,11 +74,33 @@ class CPD_Ajax {
             wp_send_json_error(array('message' => __('No file uploaded', 'custom-product-designer')));
         }
 
+        // Check for upload errors
+        if (isset($_FILES['image']['error']) && $_FILES['image']['error'] !== UPLOAD_ERR_OK) {
+            $error_messages = array(
+                UPLOAD_ERR_INI_SIZE => __('The uploaded file exceeds the upload_max_filesize directive in php.ini', 'custom-product-designer'),
+                UPLOAD_ERR_FORM_SIZE => __('The uploaded file exceeds the MAX_FILE_SIZE directive', 'custom-product-designer'),
+                UPLOAD_ERR_PARTIAL => __('The uploaded file was only partially uploaded', 'custom-product-designer'),
+                UPLOAD_ERR_NO_FILE => __('No file was uploaded', 'custom-product-designer'),
+                UPLOAD_ERR_NO_TMP_DIR => __('Missing a temporary folder', 'custom-product-designer'),
+                UPLOAD_ERR_CANT_WRITE => __('Failed to write file to disk', 'custom-product-designer'),
+                UPLOAD_ERR_EXTENSION => __('A PHP extension stopped the file upload', 'custom-product-designer'),
+            );
+            $error_message = isset($error_messages[$_FILES['image']['error']])
+                ? $error_messages[$_FILES['image']['error']]
+                : __('Unknown upload error', 'custom-product-designer');
+            wp_send_json_error(array('message' => $error_message));
+        }
+
         if (!function_exists('wp_handle_upload')) {
             require_once(ABSPATH . 'wp-admin/includes/file.php');
         }
 
         $uploadedfile = $_FILES['image'];
+
+        // Validate file exists
+        if (empty($uploadedfile['tmp_name']) || !is_uploaded_file($uploadedfile['tmp_name'])) {
+            wp_send_json_error(array('message' => __('Invalid file upload', 'custom-product-designer')));
+        }
 
         // Check file size
         $max_size = get_option('cpd_max_upload_size', 5) * 1024 * 1024; // Convert MB to bytes
@@ -91,8 +113,14 @@ class CPD_Ajax {
             ));
         }
 
+        // Check for empty file
+        if ($uploadedfile['size'] == 0) {
+            wp_send_json_error(array('message' => __('The uploaded file is empty', 'custom-product-designer')));
+        }
+
         // Check file type
         $allowed_types = explode(',', get_option('cpd_allowed_image_types', 'jpg,jpeg,png,gif'));
+        $allowed_types = array_map('trim', $allowed_types);
         $file_ext = strtolower(pathinfo($uploadedfile['name'], PATHINFO_EXTENSION));
 
         if (!in_array($file_ext, $allowed_types)) {
@@ -100,6 +128,31 @@ class CPD_Ajax {
                 'message' => __('Invalid file type. Allowed types: ', 'custom-product-designer') .
                             implode(', ', $allowed_types)
             ));
+        }
+
+        // Validate MIME type
+        if (function_exists('mime_content_type')) {
+            $mime_type = mime_content_type($uploadedfile['tmp_name']);
+            $allowed_mimes = array('image/jpeg', 'image/jpg', 'image/png', 'image/gif');
+
+            if (!in_array($mime_type, $allowed_mimes)) {
+                wp_send_json_error(array('message' => __('Invalid file type detected', 'custom-product-designer')));
+            }
+        }
+
+        // Ensure upload directory exists
+        $upload_dir = wp_upload_dir();
+        $cpd_upload_dir = $upload_dir['basedir'] . '/custom-product-designs';
+
+        if (!file_exists($cpd_upload_dir)) {
+            if (!wp_mkdir_p($cpd_upload_dir)) {
+                wp_send_json_error(array('message' => __('Failed to create upload directory', 'custom-product-designer')));
+            }
+        }
+
+        // Check if directory is writable
+        if (!is_writable($cpd_upload_dir)) {
+            wp_send_json_error(array('message' => __('Upload directory is not writable', 'custom-product-designer')));
         }
 
         $upload_overrides = array(
@@ -119,7 +172,8 @@ class CPD_Ajax {
         if ($movefile && !isset($movefile['error'])) {
             wp_send_json_success(array('url' => $movefile['url']));
         } else {
-            wp_send_json_error(array('message' => $movefile['error']));
+            $error_msg = isset($movefile['error']) ? $movefile['error'] : __('Unknown error during file upload', 'custom-product-designer');
+            wp_send_json_error(array('message' => $error_msg));
         }
     }
 
@@ -148,6 +202,20 @@ class CPD_Ajax {
             return '';
         }
 
+        // Ensure upload directory exists
+        if (!file_exists($upload_dir)) {
+            if (!wp_mkdir_p($upload_dir)) {
+                error_log('CPD: Failed to create upload directory: ' . $upload_dir);
+                return '';
+            }
+        }
+
+        // Check if directory is writable
+        if (!is_writable($upload_dir)) {
+            error_log('CPD: Upload directory is not writable: ' . $upload_dir);
+            return '';
+        }
+
         // Generate unique filename
         $filename = $prefix . '_' . uniqid() . '_' . time() . '.png';
         $file_path = $upload_dir . '/' . $filename;
@@ -158,6 +226,7 @@ class CPD_Ajax {
             return $upload_dir_data['baseurl'] . '/custom-product-designs/' . $filename;
         }
 
+        error_log('CPD: Failed to save base64 image to: ' . $file_path);
         return '';
     }
 }

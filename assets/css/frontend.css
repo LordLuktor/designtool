@@ -1,5 +1,16 @@
 /* Custom Product Designer Frontend Styles */
 
+/* Font Preview in Dropdown */
+#cpd-font-family {
+    font-size: 16px;
+    padding: 8px;
+}
+
+#cpd-font-family option {
+    font-size: 16px;
+    padding: 5px;
+}
+
 /* Designer Button */
 .cpd-designer-btn {
     background-color: #0073aa;

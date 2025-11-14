@@ -217,6 +217,33 @@ For issues, questions, or feature requests:
 
 ## Changelog
 
+### Version 1.0.4
+- **Enhanced Image Upload Reliability**: Added comprehensive error handling and validation
+  - Automatic directory creation and permission checks
+  - Detailed error messages for upload failures
+  - Client-side retry logic with exponential backoff (up to 3 retries)
+  - File validation before upload (type and size checks)
+  - 30-second timeout for upload requests
+  - MIME type validation for enhanced security
+- **Expanded Font Library**: Added 20+ new fonts including script, handwriting, and display fonts
+  - Sans-serif: Ubuntu, Nunito, Bebas Neue, Anton, Righteous
+  - Serif: Merriweather, Abril Fatface
+  - Script & Handwriting: Pacifico, Dancing Script, Lobster, Caveat, Permanent Marker, Indie Flower, Shadows Into Light, Satisfy, Great Vibes
+  - Monospace: Courier Prime
+- **Font Preview in Dropdown**: Each font name now displays in its own font for easy preview
+- **Background Color Control**: Added ability to change canvas background color
+- **New Shapes**: Expanded shape library with:
+  - Star (5-pointed)
+  - Hexagon (regular polygon)
+  - Line tool
+  - Stroke color and width controls for all shapes
+- **Advanced Object Positioning**: New alignment and layer controls
+  - Horizontal alignment: Left, Center, Right
+  - Vertical alignment: Top, Middle, Bottom
+  - Layer order: Bring Forward, Send Backward
+- **Improved Shape Controls**: Added stroke color and width options for all shapes
+- Applied `cpd_available_fonts` filter for custom font additions
+
 ### Version 1.0.3
 - Fixed designer modal sizing to fit viewport without scrolling
 - Improved responsive layout with flexbox

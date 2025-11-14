@@ -129,15 +129,73 @@ class CPD_Frontend {
                             <button class="cpd-add-shape cpd-btn-small" data-shape="triangle">
                                 <?php echo esc_html__('Triangle', 'custom-product-designer'); ?>
                             </button>
+                            <button class="cpd-add-shape cpd-btn-small" data-shape="star">
+                                <?php echo esc_html__('Star', 'custom-product-designer'); ?>
+                            </button>
+                            <button class="cpd-add-shape cpd-btn-small" data-shape="polygon">
+                                <?php echo esc_html__('Hexagon', 'custom-product-designer'); ?>
+                            </button>
+                            <button class="cpd-add-shape cpd-btn-small" data-shape="line">
+                                <?php echo esc_html__('Line', 'custom-product-designer'); ?>
+                            </button>
 
                             <div id="cpd-shape-options" class="cpd-options" style="display: none;">
                                 <label>
                                     <?php echo esc_html__('Fill Color:', 'custom-product-designer'); ?>
                                     <input type="color" id="cpd-shape-color" value="#ff0000" />
                                 </label>
+                                <label>
+                                    <?php echo esc_html__('Stroke Color:', 'custom-product-designer'); ?>
+                                    <input type="color" id="cpd-shape-stroke-color" value="#000000" />
+                                </label>
+                                <label>
+                                    <?php echo esc_html__('Stroke Width:', 'custom-product-designer'); ?>
+                                    <input type="number" id="cpd-shape-stroke-width" value="0" min="0" max="20" />
+                                </label>
                             </div>
                         </div>
                         <?php endif; ?>
+
+                        <div class="cpd-tool-section">
+                            <h3><?php echo esc_html__('Background', 'custom-product-designer'); ?></h3>
+                            <label>
+                                <?php echo esc_html__('Canvas Background:', 'custom-product-designer'); ?>
+                                <input type="color" id="cpd-canvas-bg-color" value="#ffffff" />
+                            </label>
+                            <button id="cpd-apply-bg-color" class="cpd-btn-small">
+                                <?php echo esc_html__('Apply', 'custom-product-designer'); ?>
+                            </button>
+                        </div>
+
+                        <div class="cpd-tool-section">
+                            <h3><?php echo esc_html__('Position', 'custom-product-designer'); ?></h3>
+                            <button id="cpd-align-left" class="cpd-btn-small" title="<?php echo esc_attr__('Align Left', 'custom-product-designer'); ?>">
+                                <?php echo esc_html__('← Left', 'custom-product-designer'); ?>
+                            </button>
+                            <button id="cpd-align-center" class="cpd-btn-small" title="<?php echo esc_attr__('Center', 'custom-product-designer'); ?>">
+                                <?php echo esc_html__('Center', 'custom-product-designer'); ?>
+                            </button>
+                            <button id="cpd-align-right" class="cpd-btn-small" title="<?php echo esc_attr__('Align Right', 'custom-product-designer'); ?>">
+                                <?php echo esc_html__('Right →', 'custom-product-designer'); ?>
+                            </button>
+                            <br/>
+                            <button id="cpd-align-top" class="cpd-btn-small" title="<?php echo esc_attr__('Align Top', 'custom-product-designer'); ?>">
+                                <?php echo esc_html__('↑ Top', 'custom-product-designer'); ?>
+                            </button>
+                            <button id="cpd-align-middle" class="cpd-btn-small" title="<?php echo esc_attr__('Middle', 'custom-product-designer'); ?>">
+                                <?php echo esc_html__('Middle', 'custom-product-designer'); ?>
+                            </button>
+                            <button id="cpd-align-bottom" class="cpd-btn-small" title="<?php echo esc_attr__('Align Bottom', 'custom-product-designer'); ?>">
+                                <?php echo esc_html__('Bottom ↓', 'custom-product-designer'); ?>
+                            </button>
+                            <br/>
+                            <button id="cpd-bring-forward" class="cpd-btn-small" title="<?php echo esc_attr__('Bring Forward', 'custom-product-designer'); ?>">
+                                <?php echo esc_html__('Bring Forward', 'custom-product-designer'); ?>
+                            </button>
+                            <button id="cpd-send-backward" class="cpd-btn-small" title="<?php echo esc_attr__('Send Backward', 'custom-product-designer'); ?>">
+                                <?php echo esc_html__('Send Backward', 'custom-product-designer'); ?>
+                            </button>
+                        </div>
 
                         <?php if (get_option('cpd_enable_clipart', 1)): ?>
                         <div class="cpd-tool-section">
