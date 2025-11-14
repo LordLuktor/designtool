@@ -217,6 +217,12 @@ For issues, questions, or feature requests:
 
 ## Changelog
 
+### Version 1.0.3
+- Fixed designer modal sizing to fit viewport without scrolling
+- Improved responsive layout with flexbox
+- Canvas and toolbar now properly constrained to window size
+- Better mobile and tablet experience
+
 ### Version 1.0.2
 - Fixed WooCommerce compatibility warnings
 - Added HPOS (High-Performance Order Storage) compatibility declaration

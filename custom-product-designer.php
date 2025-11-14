@@ -3,7 +3,7 @@
  * Plugin Name: Custom Product Designer for WooCommerce
  * Plugin URI: https://github.com/LordLuktor/designtool
  * Description: A powerful product customization tool that allows customers to design custom products like t-shirts, cups, caps, and more with text, images, shapes, and effects.
- * Version: 1.0.2
+ * Version: 1.0.3
  * Author: Custom Design Tool
  * Author URI: https://github.com/LordLuktor
  * Text Domain: custom-product-designer
@@ -21,7 +21,7 @@ if (!defined('ABSPATH')) {
 }
 
 // Define plugin constants
-define('CPD_VERSION', '1.0.2');
+define('CPD_VERSION', '1.0.3');
 define('CPD_PLUGIN_DIR', plugin_dir_path(__FILE__));
 define('CPD_PLUGIN_URL', plugin_dir_url(__FILE__));
 define('CPD_PLUGIN_BASENAME', plugin_basename(__FILE__));
