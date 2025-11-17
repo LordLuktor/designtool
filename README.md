@@ -217,6 +217,16 @@ For issues, questions, or feature requests:
 
 ## Changelog
 
+### Version 1.0.4
+- Fixed unreliable image upload issues
+- Added client-side file validation (size and type)
+- Improved upload error handling with specific error messages
+- Added 30-second timeout to prevent hanging uploads
+- File input now resets after upload (allows re-uploading same file)
+- Better visual feedback with success/error notifications
+- Added CORS support for image loading
+- Improved image loading error handling
+
 ### Version 1.0.3
 - Fixed designer modal sizing to fit viewport without scrolling
 - Improved responsive layout with flexbox

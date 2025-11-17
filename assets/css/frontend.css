@@ -413,13 +413,19 @@
     position: fixed;
     top: 20px;
     right: 20px;
-    background-color: #28a745;
+    background-color: #2196F3;
     color: white;
     padding: 15px 20px;
     border-radius: 4px;
     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
     z-index: 100000;
     animation: cpd-slideIn 0.3s ease;
+    max-width: 350px;
+    word-wrap: break-word;
+}
+
+.cpd-notification.success {
+    background-color: #28a745;
 }
 
 .cpd-notification.error {

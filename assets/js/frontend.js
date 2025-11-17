@@ -200,7 +200,10 @@
         });
 
         $('#cpd-image-upload').on('change', function(e) {
-            uploadImage(e.target.files[0]);
+            const file = e.target.files[0];
+            uploadImage(file);
+            // Reset input so same file can be uploaded again
+            $(this).val('');
         });
 
         // Shapes
@@ -302,7 +305,26 @@
     }
 
     function uploadImage(file) {
-        if (!file) return;
+        if (!file) {
+            showNotification('Please select a file', 'error');
+            return;
+        }
+
+        // Client-side validation
+        const maxSize = 5 * 1024 * 1024; // 5MB
+        const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif'];
+
+        // Check file size
+        if (file.size > maxSize) {
+            showNotification('File is too large. Maximum size is 5MB.', 'error');
+            return;
+        }
+
+        // Check file type
+        if (!allowedTypes.includes(file.type)) {
+            showNotification('Invalid file type. Please upload JPG, PNG, or GIF.', 'error');
+            return;
+        }
 
         const formData = new FormData();
         formData.append('action', 'cpd_upload_image');
@@ -317,23 +339,50 @@
             data: formData,
             processData: false,
             contentType: false,
+            timeout: 30000, // 30 second timeout
             success: function(response) {
                 hideLoading();
                 if (response.success) {
                     addImageToCanvas(response.data.url);
+                    showNotification('Image uploaded successfully!', 'success');
                 } else {
                     showNotification(response.data.message || cpdData.i18n.error, 'error');
                 }
             },
-            error: function() {
+            error: function(xhr, status, error) {
                 hideLoading();
-                showNotification(cpdData.i18n.error, 'error');
+                let errorMsg = cpdData.i18n.error;
+
+                if (status === 'timeout') {
+                    errorMsg = 'Upload timed out. Please try again.';
+                } else if (xhr.status === 413) {
+                    errorMsg = 'File is too large for the server.';
+                } else if (xhr.status === 0) {
+                    errorMsg = 'Network error. Please check your connection.';
+                }
+
+                showNotification(errorMsg, 'error');
+                console.error('Upload error:', status, error);
             }
         });
     }
 
     function addImageToCanvas(url) {
+        if (!url) {
+            showNotification('Invalid image URL', 'error');
+            return;
+        }
+
+        showLoading();
+
         fabric.Image.fromURL(url, function(img) {
+            hideLoading();
+
+            if (!img || !img.width || !img.height) {
+                showNotification('Failed to load image. Please try again.', 'error');
+                return;
+            }
+
             // Scale image if too large
             const maxWidth = currentCanvas.width * 0.5;
             const maxHeight = currentCanvas.height * 0.5;
@@ -351,6 +400,8 @@
             currentCanvas.add(img);
             currentCanvas.setActiveObject(img);
             currentCanvas.renderAll();
+        }, {
+            crossOrigin: 'anonymous' // Handle CORS issues
         });
     }
 
@@ -584,18 +635,23 @@
     }
 
     function showNotification(message, type) {
+        // Remove any existing notifications
+        $('.cpd-notification').remove();
+
         const $notification = $('<div>', {
-            'class': 'cpd-notification' + (type === 'error' ? ' error' : ''),
+            'class': 'cpd-notification' + (type === 'error' ? ' error' : '') + (type === 'success' ? ' success' : ''),
             text: message
         });
 
         $('body').append($notification);
 
+        const duration = type === 'error' ? 4000 : 2500;
+
         setTimeout(function() {
             $notification.fadeOut(function() {
                 $(this).remove();
             });
-        }, 3000);
+        }, duration);
     }
 
 })(jQuery);
